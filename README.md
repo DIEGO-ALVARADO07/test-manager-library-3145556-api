@@ -48,3 +48,51 @@ No hay prórroga: suban avances parciales con commits pequeños durante la prueb
 | [`test-manager-library-3145556-page`](https://github.com/code-sena/test-manager-library-3145556-page) | Sitio público estático de presentación |
 | [`test-manager-library-3145556-infra`](https://github.com/code-sena/test-manager-library-3145556-infra) | Contenedores, red, volúmenes y motor de base de datos vacío |
 | [`test-manager-library-3145556-tool`](https://github.com/code-sena/test-manager-library-3145556-tool) | Utilidades: sembrador de datos de demostración |
+
+---
+
+## Cómo correr la API
+
+Requiere Docker; no hace falta PHP local. La forma normal es con `infra` (`docker compose up`, ver su README). Solo la API, contra una base ya levantada:
+
+```bash
+cp .env.example .env     # completar DATABASE_URL, JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+docker build -t library-api .
+docker run --rm --env-file .env -p 8000:8000 library-api
+curl http://localhost:8000/api/v1/health      # {"status":"ok"}
+```
+
+Al arrancar, el contenedor corre `php artisan migrate --force` (el esquema `library` lo crean las migraciones, ADR-001) y `php artisan library:bootstrap-admin` (crea el admin desde `ADMIN_USERNAME`/`ADMIN_PASSWORD`; es idempotente).
+
+## Cómo probar
+
+Las pruebas usan PostgreSQL real (una base distinta, por ejemplo `library_test`) y reconstruyen el esquema desde las migraciones.
+
+```bash
+docker run --rm --network <red-de-la-base> --env-file .env \
+  -e DATABASE_URL=postgresql://USER:PASS@db:5432/library_test -e APP_ENV=testing \
+  --entrypoint "" library-api vendor/bin/pest
+```
+
+| Suite | Carpeta | Tarea | Contra qué corre |
+|---|---|---|---|
+| Dominio | `tests/Unit` | T-03…T-06 | Objetos puros |
+| Aplicación | `tests/Application` | T-07, T-09, T-10 | Fakes en memoria |
+| Integración | `tests/Integration` | T-02, T-18 | PostgreSQL (consultas de `data-model.md` §10) |
+| Contrato | `tests/Contract` | T-16 | La API completa: rutas y los 14 códigos de error |
+| Concurrencia | `tests/Concurrency` | T-13, RNF-2 | Procesos paralelos sobre el último ejemplar |
+| Arquitectura | `tests/Architecture` | T-19 | Pest Arch (artículos I, II y III) |
+
+## Estructura (hexagonal)
+
+```text
+src/
+├── Domain/        # PHP puro: agregados, objetos de valor, política y errores (Art. I)
+├── Application/   # puertos (interfaces) y un servicio por caso de uso (Art. II)
+├── Adapters/
+│   ├── Inbound/   # Http (controladores, middleware, mapeo de errores) y Console
+│   └── Outbound/  # Persistence (PostgreSQL), Security (Argon2id, JWT), Storage, Time
+└── Bootstrap/Composition/PortBindings.php   # único punto de composición (Art. III)
+```
+
+Las decisiones sobre huecos del spec están en `docs/spec-laravel/decisiones-y-huecos.md` y los ADR-005…007.
