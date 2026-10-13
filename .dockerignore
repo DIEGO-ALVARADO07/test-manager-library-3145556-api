@@ -1,0 +1,6 @@
+vendor
+.git
+.env
+storage/logs/*
+storage/framework/cache/data/*
+var
