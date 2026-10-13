@@ -5,6 +5,8 @@ use Library\Application\Services\BootstrapAdminService;
 use Library\Application\Services\CreateLibrarianService;
 use Tests\TestCase;
 
+require_once __DIR__.'/Fakes/InMemory.php';
+
 uses(TestCase::class)->in('Integration', 'Contract', 'Concurrency');
 
 const CATEGORY_NOVEL = '11111111-1111-4111-8111-111111111111';
