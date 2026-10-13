@@ -13,3 +13,4 @@
 /.phpunit.cache
 .idea
 .vscode
+.run-in-docker.sh
