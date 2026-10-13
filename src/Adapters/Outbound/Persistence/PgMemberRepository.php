@@ -31,8 +31,8 @@ final class PgMemberRepository implements MemberRepository
         if ($text !== null && trim($text) !== '') {
             $like = PgTime::likeContains(trim($text));
             $query->where(static function ($q) use ($like): void {
-                $q->whereRaw("full_name ILIKE ? ESCAPE '\\'", [$like])
-                    ->orWhereRaw("document_number ILIKE ? ESCAPE '\\'", [$like]);
+                $q->whereRaw("full_name ILIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("document_number ILIKE ? ESCAPE '!'", [$like]);
             });
         }
         $total = (clone $query)->count();

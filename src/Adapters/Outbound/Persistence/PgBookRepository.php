@@ -52,8 +52,8 @@ final class PgBookRepository implements BookRepository
         if ($text !== null && trim($text) !== '') {
             $like = PgTime::likeContains(trim($text));
             $query->where(static function ($q) use ($like): void {
-                $q->whereRaw("book.title ILIKE ? ESCAPE '\\'", [$like])
-                    ->orWhereRaw("book.author ILIKE ? ESCAPE '\\'", [$like]);
+                $q->whereRaw("book.title ILIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("book.author ILIKE ? ESCAPE '!'", [$like]);
             });
         }
         if ($categoryId !== null) {

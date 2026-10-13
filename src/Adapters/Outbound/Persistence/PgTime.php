@@ -32,8 +32,7 @@ final class PgTime
     /** Escapes LIKE wildcards so user text is matched literally. */
     public static function likeContains(string $text): string
     {
-        $backslash = chr(92);
-
-        return '%'.str_replace([$backslash, '%', '_'], [$backslash.$backslash, $backslash.'%', $backslash.'_'], $text).'%';
+        // "!" is the escape character declared in the queries (ESCAPE '!'); a backslash would confuse PDO's parser.
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $text).'%';
     }
 }
